@@ -123,7 +123,10 @@ def main():
         # Loop on sensors
         for sensor in SENSORS:
             # Get measures
-            measures = pull_measures(sensor['mac'])
+            try:
+                measures = pull_measures(sensor['mac'])
+            except Exception:
+                continue
 
             # Update metrics
             temperature_gauge.labels(
