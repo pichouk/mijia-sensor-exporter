@@ -8,6 +8,7 @@ import sys
 import os
 import time
 import subprocess
+import math
 import json
 from prometheus_client import start_http_server, Gauge, REGISTRY, PROCESS_COLLECTOR, PLATFORM_COLLECTOR
 
@@ -90,6 +91,15 @@ def pull_measures(mac_addr):
     return measures
 
 
+def calculate_humidex(temp, humidity):
+    """Calculate Humidex value based on temperature and humidity"""
+
+    def calculate_dew_point(temp, humidity):
+        return math.pow((humidity/100), 1/8)*(112+(0.9*temp))+(0.1*temp)-112
+
+    return temp+0.5555*(6.11*math.exp(5417.7530*((1/273.16)-(1/(273.15+calculate_dew_point(temp, humidity)))))-10)
+
+
 def check_probes(addresses):
     """Check that a list of sensors are responding"""
     for address in addresses:
@@ -115,6 +125,7 @@ def main():
     # Register metrics
     temperature_gauge = Gauge('mijia_temperature', 'Temperature', ['mac', 'area', 'area_type'])
     humidity_gauge = Gauge('mijia_humidity', 'Humidity', ['mac', 'area', 'area_type'])
+    humidex_gauge = Gauge('mijia_humidex', 'Humidex', ['mac', 'area', 'area_type'])
     battery_gauge = Gauge('mijia_battery_level', 'Percentage of remaining battery', ['mac', 'area', 'area_type'])
 
     # Loop forever
@@ -135,6 +146,9 @@ def main():
             humidity_gauge.labels(
                 mac=sensor['mac'], area=sensor['area'], area_type=sensor['area_type']
             ).set(measures['humidity'])
+            humidex_gauge.labels(
+                mac=sensor['mac'], area=sensor['area'], area_type=sensor['area_type']
+            ).set(calculate_humidex(measures['temperature'], measures['humidity']))
             battery_gauge.labels(
                 mac=sensor['mac'], area=sensor['area'], area_type=sensor['area_type']
             ).set(measures['battery_level'])
