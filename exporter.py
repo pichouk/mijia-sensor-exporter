@@ -65,9 +65,9 @@ def parse_temperature_humidity_plaintext_to_numeric(data_plaintext):
 def parse_battery_level_hex_to_numeric(battery_raw):
     """
     >>> parse_battery_level_hex_to_numeric('60')
-    93.75
+    96
     """
-    return 100 * float(battery_raw) / 64.0
+    return int(battery_raw, 16)
 
 
 def pull_measures(mac_addr):
